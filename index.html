@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Beat · NYANSATEK</title>
+<meta name="description" content="Make real beats for recording, and learn sound frequencies: tones, binaural beats, healing and meditation frequencies, mix bands and ear training.">
+<meta name="theme-color" content="#0b101b">
+<link rel="icon" href="icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand"><img src="icon-192.png" alt="" width="28" height="28"><span>Beat</span></div>
+  <nav class="tabs" role="tablist" aria-label="Sections">
+    <button role="tab" data-tab="maker" aria-selected="true">Beat Maker</button>
+    <button role="tab" data-tab="lab" aria-selected="false">Frequency Lab</button>
+    <button role="tab" data-tab="learn" aria-selected="false">Learn</button>
+  </nav>
+  <div class="meter" title="Output level (peak, dBFS)"><div class="meter-bar"><i id="meterFill"></i><b id="meterPeak"></b></div><span id="meterTxt">-∞</span></div>
+</header>
+
+<!-- ============ BEAT MAKER ============ -->
+<section id="maker" class="panel on" role="tabpanel">
+  <div class="transport card">
+    <button id="playBtn" class="play" aria-label="Play (space bar)"><svg viewBox="0 0 24 24"><path d="M7 4l13 8-13 8z"/></svg><span>Play</span></button>
+    <label class="fld">BPM <input id="bpm" type="number" min="40" max="240" step="1" value="105"></label>
+    <button id="tapBtn" class="btn" title="Tap 4 times or more in time to set the tempo">Tap</button>
+    <label class="fld">Swing <input id="swing" type="range" min="50" max="75" step="1" value="50"><output id="swingOut">50%</output></label>
+    <label class="fld">Steps <select id="steps"><option>8</option><option>12</option><option selected>16</option><option>24</option><option>32</option></select></label>
+    <label class="fld">Key <select id="key"></select><select id="scale"><option value="minor">minor</option><option value="major">major</option><option value="dorian">dorian</option><option value="phrygian">phrygian</option><option value="penta">pentatonic minor</option></select></label>
+    <label class="fld">Tuning A4 <select id="tuning" class="tuningSel"><option value="440">440 Hz</option><option value="432">432 Hz</option></select></label>
+    <label class="fld">Start from <select id="preset"></select></label>
+  </div>
+
+  <div class="patbar card">
+    <div class="pats" id="pats" role="group" aria-label="Patterns"></div>
+    <button id="copyPat" class="btn" title="Copy the current pattern into the next empty one">Copy to…</button>
+    <button id="clearPat" class="btn">Clear pattern</button>
+    <span class="sep"></span>
+    <label class="fld">Play <select id="mode"><option value="pattern">this pattern (loop)</option><option value="song">the song chain</option></select></label>
+    <label class="fld grow">Song chain <input id="chain" type="text" value="A A B A" spellcheck="false" placeholder="e.g. A A B A C D"></label>
+  </div>
+
+  <div class="gridwrap card">
+    <div id="grid" class="grid" role="grid" aria-label="Step sequencer"></div>
+    <p class="hint">Tap a step to turn it on. Drag across steps to paint. Tap a track name to hear it and edit it below.</p>
+  </div>
+
+  <div class="two">
+    <div class="card" id="trackCard">
+      <div class="cardhead"><h2 id="trkTitle">Kick</h2>
+        <div class="row">
+          <label class="btn file">Load your sample<input type="file" id="sampleFile" accept="audio/*"></label>
+          <button id="sampleClear" class="btn" hidden>Back to synth</button>
+        </div>
+      </div>
+      <p class="mute small" id="trkInfo"></p>
+      <div class="knobs">
+        <label>Volume <input type="range" id="tVol" min="0" max="1" step="0.01"><output></output></label>
+        <label>Pan <input type="range" id="tPan" min="-1" max="1" step="0.01"><output></output></label>
+        <label>Tune (semitones) <input type="range" id="tTune" min="-12" max="12" step="1"><output></output></label>
+        <label>Length / decay <input type="range" id="tDecay" min="0.2" max="2.5" step="0.01"><output></output></label>
+        <label>Tone / bite <input type="range" id="tTone" min="0" max="1" step="0.01"><output></output></label>
+        <label class="chk" id="glideWrap"><input type="checkbox" id="tGlide"> Glide between notes</label>
+      </div>
+      <h3 class="lane-h">Velocity <span class="mute small">(how hard each step is hit; drag the bars)</span></h3>
+      <div id="velLane" class="lane"></div>
+      <div id="noteWrap">
+        <h3 class="lane-h">808 notes <span class="mute small">(• = in your key)</span></h3>
+        <div id="noteLane" class="lane notes"></div>
+      </div>
+    </div>
+
+    <div class="col">
+      <div class="card">
+        <div class="cardhead"><h2>Master</h2></div>
+        <div class="knobs">
+          <label>Master volume <input type="range" id="mVol" min="0" max="1" step="0.01" value="0.8"><output></output></label>
+          <label class="chk"><input type="checkbox" id="mGlue" checked> Glue compressor (holds the drums together)</label>
+          <label class="chk"><input type="checkbox" id="mLimit" checked> Limiter (stops clipping above -1 dBFS)</label>
+        </div>
+        <canvas id="beatScope" class="scope" height="150" aria-label="Frequency spectrum of the beat"></canvas>
+        <p class="mute small">Spectrum: left is bass, right is treble. Watch where your kick and 808 sit, and keep them from fighting.</p>
+      </div>
+
+      <div class="card">
+        <div class="cardhead"><h2>Export for recording</h2></div>
+        <div class="knobs">
+          <label>What <select id="exWhat"><option value="pattern">Current pattern</option><option value="song">Song chain</option></select></label>
+          <label>Repeat <select id="exLoops"><option>1</option><option>2</option><option selected>4</option><option>8</option><option>16</option><option>32</option></select></label>
+          <label>Sample rate <select id="exRate"><option value="44100">44.1 kHz</option><option value="48000" selected>48 kHz</option></select></label>
+          <label>Bit depth <select id="exBits"><option value="16">16-bit</option><option value="24" selected>24-bit</option></select></label>
+          <label class="chk"><input type="checkbox" id="exWrap" checked> Loop-ready (exact bar length, tail wrapped to the start)</label>
+        </div>
+        <div class="row wrap">
+          <button id="exMix" class="btn gold">Mixed WAV</button>
+          <button id="exStems" class="btn">Stems (one WAV per track)</button>
+          <button id="exMidi" class="btn">MIDI file</button>
+        </div>
+        <p class="mute small" id="exStatus">Stems come out dry (no master compressor) so you can mix them in your DAW. The MIDI file opens in FL Studio, Ableton, Logic, Cubase or Reaper with drums on channel 10.</p>
+      </div>
+
+      <div class="card">
+        <div class="cardhead"><h2>Project</h2></div>
+        <div class="row wrap">
+          <input id="projName" type="text" value="My beat" aria-label="Project name" class="grow">
+          <button id="projSave" class="btn gold">Save</button>
+          <button id="projNew" class="btn">New</button>
+        </div>
+        <div class="row wrap">
+          <select id="projList" class="grow" aria-label="Saved projects"></select>
+          <button id="projLoad" class="btn">Open</button>
+          <button id="projDel" class="btn">Delete</button>
+        </div>
+        <div class="row wrap">
+          <button id="projExport" class="btn">Download project file</button>
+          <label class="btn file">Open project file<input type="file" id="projImport" accept=".json,.beat,application/json"></label>
+        </div>
+        <p class="mute small">Projects and your loaded samples are saved in this browser. Download the project file to move it to another device.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FREQUENCY LAB ============ -->
+<section id="lab" class="panel" role="tabpanel" hidden>
+  <div class="card labtop">
+    <div class="row wrap">
+      <button id="labStop" class="btn">Stop all sound</button>
+      <label class="fld">Lab volume <input type="range" id="labVol" min="0" max="1" step="0.01" value="0.5"><output></output></label>
+      <label class="fld">Space (reverb) <input type="range" id="labSpace" min="0" max="1" step="0.01" value="0.25"><output></output></label>
+      <label class="fld">Tuning A4 <select class="tuningSel" id="labTuning"><option value="440">440 Hz</option><option value="432">432 Hz</option></select></label>
+      <label class="fld">Stop after <select id="labTimer"><option value="0">never</option><option value="5">5 min</option><option value="10">10 min</option><option value="15">15 min</option><option value="20">20 min</option><option value="30">30 min</option><option value="60">60 min</option></select></label>
+      <span id="labClock" class="mute"></span>
+    </div>
+    <canvas id="labScope" class="scope" height="170" aria-label="Spectrum and waveform of the lab sound"></canvas>
+    <p class="warn small">Keep the volume low and comfortable. Very low and very high tones can be louder than they seem, and can tire your ears.</p>
+  </div>
+
+  <div class="card">
+    <div class="cardhead"><h2>Intent presets</h2><span class="mute small">Ready-made mixes of the layers below. Tweak anything after.</span></div>
+    <div class="chips" id="intentChips"></div>
+    <p class="mute small" id="intentNote"></p>
+  </div>
+
+  <div class="labgrid">
+    <div class="card layer" data-layer="tone">
+      <div class="cardhead"><h2>1 · Tone</h2><label class="switch"><input type="checkbox" id="toneOn"><span></span> On</label></div>
+      <div class="freqbig"><input id="toneFreq" type="number" min="1" max="20000" step="0.01" value="432"><span>Hz</span></div>
+      <input id="toneSlider" type="range" min="0" max="1000" step="1" aria-label="Frequency (log scale)">
+      <div class="row wrap nudges">
+        <button class="btn" data-nudge="-10">−10</button><button class="btn" data-nudge="-1">−1</button><button class="btn" data-nudge="-0.1">−0.1</button>
+        <button class="btn" data-nudge="0.1">+0.1</button><button class="btn" data-nudge="1">+1</button><button class="btn" data-nudge="10">+10</button>
+        <button class="btn" data-oct="0.5">Octave ↓</button><button class="btn" data-oct="2">Octave ↑</button>
+      </div>
+      <div class="knobs">
+        <label>Wave shape <select id="toneWave"><option value="sine">Sine (pure, no harmonics)</option><option value="triangle">Triangle (soft, odd harmonics)</option><option value="square">Square (hollow, buzzy)</option><option value="sawtooth">Sawtooth (bright, all harmonics)</option></select></label>
+        <label>Volume <input type="range" id="toneVol" min="0" max="1" step="0.01" value="0.35"><output></output></label>
+        <label>Pick a note <span class="row"><select id="toneNote"></select><select id="toneOct"></select></span></label>
+      </div>
+      <div class="facts" id="toneFacts"></div>
+    </div>
+
+    <div class="card layer" data-layer="beat">
+      <div class="cardhead"><h2>2 · Brainwave beat</h2><label class="switch"><input type="checkbox" id="beatOn"><span></span> On</label></div>
+      <div class="knobs">
+        <label>Type <select id="beatMode"><option value="binaural">Binaural (headphones)</option><option value="isochronic">Isochronic pulses (speakers OK)</option><option value="monaural">Monaural beat (speakers OK)</option></select></label>
+        <label>Carrier tone (Hz) <span class="row"><input type="number" id="beatCarrier" min="40" max="1000" step="0.01" value="200"><input type="range" id="beatCarrierR" min="40" max="1000" step="0.5" value="200"></span></label>
+        <label>Beat rate (Hz) <span class="row"><input type="number" id="beatRate" min="0.5" max="45" step="0.01" value="10"><input type="range" id="beatRateR" min="0.5" max="45" step="0.01" value="10"></span></label>
+        <label>Volume <input type="range" id="beatVol" min="0" max="1" step="0.01" value="0.35"><output></output></label>
+      </div>
+      <div class="chips" id="bandChips"></div>
+      <div class="facts" id="beatFacts"></div>
+    </div>
+
+    <div class="card layer" data-layer="pad">
+      <div class="cardhead"><h2>3 · Drone pad</h2><label class="switch"><input type="checkbox" id="padOn"><span></span> On</label></div>
+      <div class="knobs">
+        <label>Root (Hz) <span class="row"><input type="number" id="padRoot" min="20" max="2000" step="0.01" value="136.1"><button class="btn" id="padFromTone" title="Copy the tone layer's frequency">= Tone</button></span></label>
+        <label>Harmony <select id="padChord">
+          <option value="drone">Drone (root + octave)</option><option value="fifth">Open fifth (root, 5th, octave)</option>
+          <option value="major">Major chord (bright, hopeful)</option><option value="minor">Minor chord (deep, inward)</option>
+          <option value="sus">Suspended (floating, unresolved)</option><option value="harm">Natural harmonics (1·2·3·4·5 × root)</option></select></label>
+        <label>Warmth (filter) <input type="range" id="padWarm" min="0" max="1" step="0.01" value="0.45"><output></output></label>
+        <label>Breathing (slow swell) <input type="range" id="padBreath" min="0" max="1" step="0.01" value="0.4"><output></output></label>
+        <label>Volume <input type="range" id="padVol" min="0" max="1" step="0.01" value="0.35"><output></output></label>
+      </div>
+      <p class="mute small">Harmonies are built in just intonation (pure whole-number ratios like 3:2), which sounds smoother than piano tuning for long drones.</p>
+    </div>
+
+    <div class="card layer" data-layer="noise">
+      <div class="cardhead"><h2>4 · Noise bed</h2><label class="switch"><input type="checkbox" id="noiseOn"><span></span> On</label></div>
+      <div class="knobs">
+        <label>Colour <select id="noiseColor"><option value="white">White (equal energy per Hz: hiss)</option><option value="pink" selected>Pink (equal energy per octave: rain)</option><option value="brown">Brown (energy falls fast: ocean, wind)</option></select></label>
+        <label>Softness (cuts the top) <input type="range" id="noiseSoft" min="0" max="1" step="0.01" value="0.3"><output></output></label>
+        <label>Waves (slow rise and fall) <input type="range" id="noiseWave" min="0" max="1" step="0.01" value="0.3"><output></output></label>
+        <label>Volume <input type="range" id="noiseVol" min="0" max="1" step="0.01" value="0.25"><output></output></label>
+      </div>
+      <p class="mute small">Noise colours are named for how their energy spreads across frequencies. Watch the spectrum above as you switch.</p>
+    </div>
+  </div>
+
+  <div class="two">
+    <div class="card">
+      <div class="cardhead"><h2>My frequencies</h2></div>
+      <div class="row wrap"><input id="mineName" type="text" placeholder="Name this sound, e.g. Morning calm" class="grow"><button id="mineSave" class="btn gold">Save current setup</button></div>
+      <ul id="mineList" class="mine"></ul>
+    </div>
+    <div class="card">
+      <div class="cardhead"><h2>Record this session</h2></div>
+      <div class="knobs">
+        <label>Length <select id="sesLen"><option value="1">1 min</option><option value="3">3 min</option><option value="5" selected>5 min</option><option value="10">10 min</option></select></label>
+        <label>Fade in / out <select id="sesFade"><option value="2">2 s</option><option value="10" selected>10 s</option><option value="30">30 s</option></select></label>
+      </div>
+      <button id="sesExport" class="btn gold">Export WAV of the layers that are on</button>
+      <p class="mute small" id="sesStatus">Renders a 44.1 kHz stereo WAV you can loop in your DAW or play anywhere. Binaural beats only work through headphones; isochronic and monaural work on speakers too.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="cardhead"><h2>Frequency library</h2><span class="mute small">What each frequency is, what is measured, and what is tradition or belief.</span></div>
+    <div class="libfilter row wrap" id="libFilter"></div>
+    <div class="tablewrap"><table class="lib" id="libTable"><thead><tr><th>Frequency</th><th>Name</th><th>What people use it for</th><th>What the evidence says</th><th>Try it</th></tr></thead><tbody></tbody></table></div>
+  </div>
+</section>
+
+<!-- ============ LEARN ============ -->
+<section id="learn" class="panel" role="tabpanel" hidden>
+  <div class="learn">
+    <nav class="toc card" aria-label="Lessons">
+      <a href="#l-what">1. What a frequency is</a>
+      <a href="#l-energy">2. Sound and energy</a>
+      <a href="#l-bands">3. The mix bands (hear them)</a>
+      <a href="#l-ear">4. Ear training</a>
+      <a href="#l-beat">5. How a beat is built</a>
+      <a href="#l-brain">6. Brainwave beats</a>
+      <a href="#l-heal">7. Healing and meditation frequencies</a>
+      <a href="#l-notes">8. Notes and their frequencies</a>
+      <a href="#l-safe">9. Protect your ears</a>
+    </nav>
+    <div class="lessons">
+      <article class="card" id="l-what">
+        <h2>1. What a frequency is</h2>
+        <p>Sound is air pushed back and forth. One full push-and-pull is a <b>cycle</b>. <b>Frequency</b> is how many cycles happen each second, measured in <b>hertz (Hz)</b>. 440 Hz means the air moves back and forth 440 times a second. We hear frequency as <b>pitch</b>: more cycles, higher note.</p>
+        <ul>
+          <li><b>Period</b> is the time for one cycle: 1 ÷ frequency. At 100 Hz each cycle lasts 10 ms.</li>
+          <li><b>Wavelength</b> is how far one cycle stretches in air: 343 m/s ÷ frequency. A 50 Hz bass wave is almost 7 m long, which is why small rooms boom and small speakers can't make deep bass.</li>
+          <li><b>Octave</b>: doubling the frequency gives the same note one octave higher. 110, 220, 440, 880 Hz are all the note A.</li>
+          <li>Human hearing runs roughly <b>20 Hz to 20,000 Hz</b> when young; the top end drops with age and loud exposure. Below 20 Hz (infrasound) you feel it more than hear it.</li>
+        </ul>
+        <p>Open the <a href="#" data-goto="lab">Frequency Lab</a>, switch on the Tone layer, and slide from 40 Hz to 15,000 Hz. Watch the spectrum and read the facts box: it shows the period, wavelength, nearest note and mix band for any frequency you type.</p>
+      </article>
+
+      <article class="card" id="l-energy">
+        <h2>2. Sound and energy</h2>
+        <p>A sound wave carries energy, and two things decide how much:</p>
+        <ul>
+          <li><b>Amplitude</b> (how far the air moves) sets loudness. Loudness is measured in <b>decibels (dB)</b>. +6 dB doubles the pressure; about +10 dB sounds roughly twice as loud; +3 dB doubles the power.</li>
+          <li><b>Frequency</b>: for the same movement of the air, a wave with twice the frequency carries four times the power (power grows with frequency squared). That is why a tweeter barely moves while a woofer pumps visibly to sound equally loud.</li>
+        </ul>
+        <p><b>Your ears are not flat.</b> They are most sensitive around 2–5 kHz (the range of a baby's cry) and much less sensitive to deep bass. A 50 Hz tone needs roughly 30 dB more level to sound as loud as 1 kHz at quiet listening levels. The Lab's facts box shows this for any frequency (it uses the standard "A-weighting" curve).</p>
+        <p><b>What this means in a mix:</b> bass eats most of your headroom. The kick and 808 carry far more energy than the hi-hats, so they decide how loud your beat can get before it clips. That is why engineers high-pass (cut the lows from) instruments that don't need bass, and make sure the kick and 808 take turns.</p>
+        <p><b>"Energy" in the feeling sense</b> is real too, but it comes from different things: <b>tempo</b> (a slow pulse near a resting heart rate, 50–70 BPM, calms; 120+ BPM energises), <b>harmony</b> (consonant intervals relax, clashing ones create tension), <b>timbre</b> (soft sine and pad sounds soothe, bright saws excite) and <b>dynamics</b>. You can control every one of these in this app.</p>
+      </article>
+
+      <article class="card" id="l-bands">
+        <h2>3. The mix bands (tap to hear each one)</h2>
+        <p>Engineers split the spectrum into bands. Tap a band to hear only that slice of the sound, then listen for it in songs you know.</p>
+        <div id="bandList" class="bands"></div>
+      </article>
+
+      <article class="card" id="l-ear">
+        <h2>4. Ear training</h2>
+        <p>Good engineers can hear "that's around 250 Hz" without looking. Practise here. <b>Pure tone</b> plays a sine wave; <b>EQ boost</b> plays pink noise with one band boosted by 12 dB, which is exactly what you hear when an instrument has too much of a frequency.</p>
+        <div class="row wrap">
+          <label class="fld">Mode <select id="earMode"><option value="tone">Pure tone</option><option value="eq">EQ boost on pink noise</option></select></label>
+          <button id="earPlay" class="btn gold">Play a mystery sound</button>
+          <button id="earAgain" class="btn">Hear it again</button>
+          <span id="earScore" class="mute">Score: 0 / 0</span>
+        </div>
+        <div id="earBtns" class="chips"></div>
+        <p id="earMsg" class="small"></p>
+      </article>
+
+      <article class="card" id="l-beat">
+        <h2>5. How a beat is built</h2>
+        <ul>
+          <li><b>BPM</b> (beats per minute) is the tempo. One bar of 4/4 has 4 beats; the sequencer splits each beat into 4 <b>steps</b> (16th notes), so 16 steps = 1 bar.</li>
+          <li><b>Kick</b> usually lands on beat 1 (step 1). <b>Snare or clap</b> on beats 2 and 4 (steps 5 and 13) gives the backbeat. <b>Hi-hats</b> keep time between them.</li>
+          <li><b>Swing</b> delays every second 16th a little. 50% is straight (robotic); 55–62% gives the bounce in Afrobeats, Amapiano and boom bap.</li>
+          <li><b>Velocity</b> is how hard each hit is. Varying hi-hat velocity (loud, soft, medium, soft) is the fastest way to make a pattern feel human.</li>
+          <li><b>Tune the kick and 808 to the song's key.</b> Set the Key at the top and pick notes marked with • in the 808 lane. An 808 that clashes with the chords sounds muddy even if it's loud.</li>
+          <li><b>Gain staging:</b> keep the meter peaking around −6 dBFS before your mastering stage. Export at 24-bit / 48 kHz for studio work.</li>
+        </ul>
+        <div class="tablewrap"><table class="lib"><thead><tr><th>Style</th><th>Typical tempo</th><th>Signature</th></tr></thead><tbody>
+          <tr><td>Afrobeats</td><td>95–115 BPM</td><td>3-3-2 (tresillo) rhythm in kicks and percussion, shakers on every 16th, light swing</td></tr>
+          <tr><td>Amapiano</td><td>110–115 BPM</td><td>Four-on-the-floor kick, shakers, sliding "log drum" bass (use the 808 with short decay and glide)</td></tr>
+          <tr><td>Highlife / Hiplife</td><td>100–125 BPM</td><td>Bell and conga patterns, guitar-led grooves, swung percussion</td></tr>
+          <tr><td>Hip-hop / boom bap</td><td>80–95 BPM</td><td>Heavy swing, kick on 1 and the "and" of 3, snare on 2 and 4</td></tr>
+          <tr><td>Trap / drill</td><td>130–150 BPM (felt half-time)</td><td>Snare on beat 3, fast hi-hat rolls, long tuned 808s</td></tr>
+          <tr><td>House</td><td>120–128 BPM</td><td>Kick on every beat, open hat on the off-beats, clap on 2 and 4</td></tr>
+          <tr><td>Meditation / ambient</td><td>50–70 BPM or no beat</td><td>Long drones, slow swells, soft noise beds</td></tr>
+        </tbody></table></div>
+      </article>
+
+      <article class="card" id="l-brain">
+        <h2>6. Brainwave beats</h2>
+        <p>Your brain's electrical activity has rhythms, measured on an EEG in bands: <b>delta</b> (0.5–4 Hz, deep sleep), <b>theta</b> (4–8 Hz, drowsy, deep meditation), <b>alpha</b> (8–13 Hz, relaxed and awake, eyes closed), <b>beta</b> (13–30 Hz, alert, busy thinking) and <b>gamma</b> (30+ Hz, intense focus). These rates are too slow to hear as pitch, so we deliver them as a <i>pulse</i> on an audible tone:</p>
+        <ul>
+          <li><b>Binaural beat:</b> one tone in the left ear, a slightly different one in the right (e.g. 200 Hz and 210 Hz). Your brain hears a 10 Hz wobble that isn't in the air at all. Needs headphones.</li>
+          <li><b>Monaural beat:</b> both tones mixed in the air, so the wobble is real. Works on speakers.</li>
+          <li><b>Isochronic tone:</b> one tone switched on and off at the beat rate. The strongest, most obvious pulse.</li>
+        </ul>
+        <p><b>What the research says:</b> reviews of binaural-beat studies find small-to-moderate effects on anxiety and some effects on attention and pain perception, but results vary a lot and the idea that your brainwaves simply "lock on" to the beat is still debated. Treat them as a useful relaxation aid, not a guaranteed switch.</p>
+      </article>
+
+      <article class="card" id="l-heal">
+        <h2>7. Healing, meditation and manifestation frequencies</h2>
+        <p>Many traditions give special meaning to particular frequencies: the Solfeggio set (174–963 Hz), 432 Hz tuning, 528 Hz "love" frequency, 136.1 Hz "Om", 7.83 Hz Schumann resonance. This app lets you create any of them precisely, so you can explore them yourself.</p>
+        <p>To use them well, it helps to know which parts are measured and which are belief:</p>
+        <ul>
+          <li><b>Measured:</b> calm, slow, soft sound lowers heart rate and stress for many people. Music and humming you enjoy can reduce perceived pain and anxiety. Pink noise has been linked to deeper sleep in some studies. 40 Hz light-and-sound stimulation is being researched for brain health.</li>
+          <li><b>Belief and tradition:</b> that a specific number (like 528 Hz) repairs DNA, or that 432 Hz is "in tune with the universe". These ideas have meaning for many people, but controlled studies have not shown that one exact frequency heals better than another pleasant sound.</li>
+          <li><b>What clearly matters:</b> your intention, your breathing, the volume (soft), the timbre (smooth sine and pad sounds), slow movement in the sound, and how long you listen. Build sessions with those in mind and trust what you notice in your own body.</li>
+        </ul>
+        <p>Sound is a complement to medical care, never a replacement. If you are working with people who have epilepsy, pulsing sounds (and flashing lights) should be used with care.</p>
+      </article>
+
+      <article class="card" id="l-notes">
+        <h2>8. Notes and their frequencies</h2>
+        <p>Each semitone multiplies the frequency by the twelfth root of 2 (about 1.0595). Tap any cell to hear it. Switch the tuning to compare A = 440 Hz (the world standard) with A = 432 Hz.</p>
+        <div class="row"><label class="fld">Tuning A4 <select class="tuningSel" id="learnTuning"><option value="440">440 Hz</option><option value="432">432 Hz</option></select></label></div>
+        <div class="tablewrap"><table class="notes-t" id="noteTable"></table></div>
+      </article>
+
+      <article class="card" id="l-safe">
+        <h2>9. Protect your ears</h2>
+        <ul>
+          <li>Your ears are your career. Mix at a moderate level (around the volume of normal conversation) and take a 10-minute break every hour.</li>
+          <li>Pure tones above about 8 kHz and below 60 Hz are deceptive: they can be loud and damaging before they sound loud. Start low and turn up slowly.</li>
+          <li>Ringing (tinnitus) or dull hearing after a session is a warning sign. Rest your ears.</li>
+          <li>Headphones for binaural beats: keep the volume low; the effect does not need loudness.</li>
+        </ul>
+      </article>
+    </div>
+  </div>
+</section>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<script src="app.js"></script>
+</body>
+</html>
