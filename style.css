@@ -204,3 +204,4 @@ table.notes-t td.a4 { color: var(--gold); font-weight: 800; }
 /* NYANSATEK credit: logo + "by NYANSATEK" after the product name */
 .nt-by{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;letter-spacing:.02em;line-height:1.2;white-space:nowrap;opacity:.92;vertical-align:middle}.nt-by .nt-logo{width:18px;height:18px;flex:none;display:block}.nt-by b{font-weight:800;letter-spacing:.06em}.nt-by.nt-lg{font-size:13.5px;gap:7px}.nt-by.nt-lg .nt-logo{width:22px;height:22px}
 .brand .nt-by{margin-left:8px}
+@media (max-width: 640px) { .brand span { display: inline; } .brand .nt-by { display: inline-flex; margin-left: 2px; } .brand { gap: 6px; } }
